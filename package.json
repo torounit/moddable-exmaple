@@ -1,15 +1,35 @@
 {
-	"name": "moddable-example",
-	"version": "0.1.0",
-	"private": true,
-	"description": "Moddable SDK + TypeScript technical-validation app for M5Stack CoreS3",
-	"scripts": {
-		"sim": "mcconfig -d -m -p sim/m5stack",
-		"deploy": "mcconfig -d -m -p esp32/m5stack_cores3",
-		"typecheck": "tsc --noEmit"
-	},
-	"devDependencies": {
-		"@moddable/typings": "*",
-		"typescript": "^6"
-	}
+  "name": "moddable-example",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/main.js",
+  "type": "module",
+  "description": "Moddable SDK + TypeScript technical-validation app for M5Stack CoreS3",
+  "scripts": {
+    "build": "xs-dev build",
+    "start": "xs-dev run",
+    "deploy": "xs-dev run --device esp32/m5stack_cores3",
+    "prebuild": "tsc",
+    "prestart": "tsc",
+    "predeploy": "tsc"
+  },
+  "devDependencies": {
+    "@moddable/typings": "^5.3.0",
+    "typescript": "^5.7.2"
+  },
+  "moddable": {
+    "manifest": {
+      "build": {
+        "MODULES": "$(MODDABLE)/modules"
+      },
+      "include": [
+        "$(MODDABLE)/examples/manifest_base.json"
+      ],
+      "resources": {
+        "*-alpha": [
+          "$(MODDABLE)/examples/assets/fonts/OpenSans-Semibold-28"
+        ]
+      }
+    }
+  }
 }

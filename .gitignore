@@ -3,3 +3,4 @@ build/
 dist/
 *.tsbuildinfo
 .DS_Store
+package-manifest.json

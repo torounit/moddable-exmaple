@@ -5,49 +5,49 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## プロジェクト概要
 
 **Moddable SDK + TypeScript** で **M5Stack CoreS3** アプリを開発できるかの技術検証。
-対象プラットフォーム識別子は `esp32/m5stack_cores3`（ESP32-S3 / 320x240 静電容量タッチ液晶）。
-アプリ本体は最小の Piu GUI（[main.ts](main.ts)、画面タップでカウンタが増える）。
+対象プラットフォーム識別子は `esp32/m5stack_cores3`（ESP32-S3 / 320x240 タッチ液晶）。
+アプリ本体は最小の Piu GUI（[main.ts](main.ts)。画面左半分タップで -1、右半分で +1 のカウンタ）。
+
+構成は [`xs-dev`](https://xs-dev.js.org) の `xs-dev init --typescript` が生成する雛形に準拠している。
 
 ## コマンド
 
-npm スクリプトが入口。npm は `node_modules/.bin` を `PATH` に足すため、ビルド中に Moddable が素の `tsc` を呼んでも解決できる。
+```
+npm start     # tsc(prestart) → xs-dev run（macOS シミュレータ + xsbug）
+npm run build # tsc(prebuild) → xs-dev build
+npm run deploy # tsc(predeploy) → CoreS3 実機へ書き込み
+```
 
-- `npm run sim` — ビルドして macOS シミュレータを起動（xsbug デバッガ付き）。高速な反復用。
-- `npm run deploy` — 接続した CoreS3 にビルド＆書き込み（`mcconfig -d -m -p esp32/m5stack_cores3`）。
-- `npm run typecheck` — `tsc --noEmit` のみ（型チェック。ビルドはしない）。
+`prestart`/`prebuild`/`predeploy` の npm ライフサイクルで先に `tsc` が走る（下記の2段階ビルドのため）。
 
-`mcconfig` を直接叩く場合は `mcconfig` と `tsc` が PATH にある必要がある。シェル設定（`~/.zshenv`）で `~/.local/share/xs-dev-export.sh` を読み込んでいるので新しいシェルでは通る。通っていなければ `source ~/.local/share/xs-dev-export.sh` する。
+## ビルドの仕組み（2段階）
+
+`xs-dev init --typescript` 準拠のため、mcconfig で `.ts` を直接ビルドするのではなく **tsc → mcpack の2段階**:
+
+1. **`tsc`** が [tsconfig.json](tsconfig.json) に従い `main.ts` を `dist/main.js` にコンパイル（`outDir: dist`）。
+2. **`xs-dev run`** が内部で **`mcpack`** を使い、`package.json` の `"main": "dist/main.js"` を入口にビルド・実行する。
+
+要点:
+- **`xs-dev` は `package.json` があると自動で `mcpack` を使う**（`mcconfig` ではなく）。そのため入口はコンパイル済み JS（`dist/main.js`）である必要がある。TypeScript ソースを直接 `main` にはできない。
+- **manifest は `package.json` の `moddable.manifest` に埋め込む**（別ファイルの `manifest.json` は持たない）。`mcpack` がここから `package-manifest.json` を生成する（ビルド成果物・gitignore 済み）。
+- **`mcpack` は `main.ts`(→dist) 内の import を走査して依存を自動注入する**。`import "piu/MC"` を検知すると `manifest_piu.json` を自動 include する（ビルドログに `# mcpack include: .../manifest_piu.json` が出る）。
+- フォント等のリソースは `moddable.manifest.resources` に記述する。
+
+## Piu と TypeScript の注意点
+
+- **piu/MC のクラス（`Application`/`Skin`/`Style`/`Text`/`Behavior`…）はグローバル**として提供される（`@moddable/typings` の `piu/MC.d.ts` が `global { const Application: … }` を宣言）。値は import せず、グローバルとして参照する。
+  - `main.ts` 冒頭は `import "piu/MC";`（副作用 import。これで実行時にグローバルが入り、`mcpack` も piu を検知する）+ 型注釈用に `import type { Application, Text } from "piu/MC";`。
+  - 名前付き値 import（`import { Application } from "piu/MC"`）はコンパイル時に省略され、`dist/main.js` から消えて `mcpack` が piu を見つけられなくなるので使わない。
+- テンプレートのインスタンス化は**引数2つ必須**（data と dictionary）: 例 `new CountText($, {})`, `new CounterApplication(data, {})`。
+- `anchor` を付けたコンテンツは、その第1引数(data)に自分を差し込む（→ `data.countText`）。`Behavior` は `onCreate(app, data)` で受け取った `this.data` から参照する。
+- `Behavior` が後から設定するフィールドは `declare data: Model` で型付けする（実行コードを出さないため）。
 
 ## 前提ツール
 
-- **Moddable SDK**（`$MODDABLE` 設定済み）。本リポジトリは [`xs-dev`](https://xs-dev.js.org) で構築。ビルド前に `source ~/.local/share/xs-dev-export.sh`（`MODDABLE` / `IDF_PATH` / SDK ツールの PATH を設定）。
-- **TypeScript 6 以上**（devDependency）。SDK が生成するビルド設定は `lib/target: es2025` を要求し、TS 5 系は拒否するため TS 6 が必須。
-- **実機ビルド**には ESP-IDF（`IDF_PATH`）が追加で必要。`xs-dev setup --device esp32` で導入。
-
-## TypeScript + Moddable のビルドの仕組み
-
-エントリは `package.json` ではなく [manifest.json](manifest.json)。ビルドの全体像は、manifest とそれが include する SDK マニフェストを合わせて読むと分かる。
-
-- `modules: { "*": "./main" }` が `main.ts` を指す。`.ts` なので `mcconfig` が `tsc` で型チェックしたうえで XS コンパイラが型を除去してバイトコード化する。xsbug には元の TypeScript が表示される。
-- include した SDK マニフェストが機能を注入する（"build injection"）: `manifest_piu.json`（Piu UI + ディスプレイ/タッチドライバ）、`manifest_base.json`（コアランタイム）、`manifest_typings.json`（ビルド時の型定義）。`manifest_piu` は `manifest_base` を含まないので3つとも必要。
-- **型定義は npm ではなく `$MODDABLE/typings` にある。** `manifest_typings.json` が `piu/*` や `embedded:io/*` などの specifier をそこへマッピングする。[tsconfig.json](tsconfig.json) はエディタ用で、npm 公開版の同じ型（`./node_modules/@moddable/typings`）を指す。
-- manifest の `typescript.tsconfig.compilerOptions` ブロックで SDK 生成の tsconfig を上書きできる（SDK が `mcmanifest.js` で `Object.assign` する）。本リポジトリはここで `lib` に `esnext.disposable` を足している。SDK の型定義が `Disposable` グローバルを参照するが、これは `es2025` lib に含まれないため。
-
-## Piu アプリの注意点（実行時 "unhandled exception" になりやすい）
-
-[main.ts](main.ts) はモジュール読み込み時に UI を構築し、`Application` を `export default` する。編集時の注意:
-
-- 複数行/フロー表示には `Text` を使う。その `Style` は `horizontal`/パディングを持つが **`vertical` は不可**（それは単一行の `Label` 用）。`Text` のスタイルに `vertical` を付けるとレイアウト時に例外になり得る。
-- `Behavior` からコンテンツを更新するときは、名前で実行時ルックアップせず、モジュールスコープの参照を保持して直接書き換える（`countText` 参照）。
-- `Application`（や任意のコンテンツ）がタッチを受け取るには `active: true` が必要。
-- フォントは manifest の `resources`（`*-alpha`）にバンドルし、`Style` からはそのリソース名（例 `"OpenSans-Semibold-28"`）で参照する。
+- `xs-dev` と Moddable SDK（`$MODDABLE`）。新しいシェルは `~/.zshenv` が `~/.local/share/xs-dev-export.sh` を読み込む。
+- 実機ビルドは ESP-IDF（`xs-dev setup --device esp32`）。
+- devDependencies: `@moddable/typings`, `typescript`（`tsconfig.json` は `@moddable/typings` の型を参照）。
 
 ## ディスプレイ無しでの動作確認
 
-シミュレータは GUI アプリでヘッドレスシェルからは観測できない。例外なく構築・描画されるかは、ログモードでビルドしてトレースを読む:
-
-```
-mcconfig -dl -m -p sim      # ビルド→sim 起動→xsbug-log 経由でトレースを標準出力へ
-```
-
-`Behavior.onDisplaying`（レイアウト・表示完了時に一度発火）に `trace("…\n")` を入れ、`[Thread 1] Connected` の後に出れば描画到達。注意: モジュール評価中のトレースは、その評価が途中で例外を投げると失われる。マーカーより手前のトレースが「出ない」＝それより前の構築で例外が起きた、という切り分けに使える。
+シミュレータは GUI で、ヘッドレスシェルからは観測しづらい。ビルド成否と例外・トレースは `mcpack mcconfig -dl -m -p sim -o <dir>` を xsbug-log 経由で流して確認できる（`[Thread 1] Connected` の後にトレースが出る）。`onDisplaying` に `trace()` を入れれば描画到達を確認できる。

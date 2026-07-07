@@ -1,15 +1,37 @@
 {
-	"compilerOptions": {
-		"target": "es2022",
-		"module": "es2022",
-		"moduleResolution": "bundler",
-		"lib": ["es2022", "esnext.disposable"],
-		"strict": true,
-		"noEmit": true,
-		"paths": {
-			"*": ["./node_modules/@moddable/typings/*"]
-		},
-		"types": ["./node_modules/@moddable/typings/xs"]
-	},
-	"include": ["*.ts"]
+  "compilerOptions": {
+    "incremental": true,
+    "lib": [
+      "es2022"
+    ],
+    "outDir": "dist",
+    "module": "es2022",
+    "sourceMap": true,
+    "target": "ES2022",
+    "checkJs": true,
+    "baseUrl": ".",
+    "paths": {
+      "*": [
+        "*",
+        "node_modules/@moddable/typings/*"
+      ]
+    },
+    "types": [
+      "./node_modules/@moddable/typings/xs",
+      "./node_modules/@moddable/typings/mcpack",
+      "./node_modules/@moddable/typings/embedded_provider/builtin.d.ts",
+      "./node_modules/@moddable/typings/embedded_io/_common.d.ts",
+      "./node_modules/@moddable/typings/embedded_io/analog.d.ts",
+      "./node_modules/@moddable/typings/embedded_io/digital.d.ts",
+      "./node_modules/@moddable/typings/embedded_io/digitalbank.d.ts",
+      "./node_modules/@moddable/typings/embedded_io/i2c.d.ts",
+      "./node_modules/@moddable/typings/embedded_io/pulsecount.d.ts",
+      "./node_modules/@moddable/typings/embedded_io/pwm.d.ts",
+      "./node_modules/@moddable/typings/embedded_io/serial.d.ts",
+      "./node_modules/@moddable/typings/embedded_io/smbus.d.ts",
+      "./node_modules/@moddable/typings/embedded_io/spi.d.ts",
+      "./node_modules/@moddable/typings/embedded_io/system.d.ts",
+      "./node_modules/@moddable/typings/global.d.ts"
+    ]
+  }
 }

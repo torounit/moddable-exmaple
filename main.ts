@@ -1,11 +1,11 @@
-import { Application, Skin, Style, Text, Behavior } from "piu/MC";
+import "piu/MC";
+import type { Application, Text } from "piu/MC";
 
 // M5Stack CoreS3 (320x240 タッチ液晶) 向けの最小 Piu アプリ。
-// 画面タップでカウンタが増える = 表示・タッチ・TypeScript の疎通確認。
+// 画面左半分タップで -1、右半分タップで +1。表示・タッチ・TypeScript の疎通確認。
 //
-// Piu 公式のイディオム: テンプレートで data($) を親→子へ流し、`anchor` を
-// 付けたコンテンツはその data に自分を差し込む。Behavior は onCreate で
-// 受け取った this.data[anchor] を参照する。
+// piu/MC のクラス(Application/Skin/Text/Behavior…)はグローバルとして提供される
+// ため、`import "piu/MC"` で読み込み、型注釈だけ `import type` する。
 
 type Model = { count: number; countText?: Text };
 
@@ -17,7 +17,6 @@ class CounterBehavior extends Behavior {
 		this.data = data;
 	}
 	onTouchBegan(application: Application, _id: number, x: number, _y: number, _ticks: number) {
-		// 画面左半分でデクリメント、右半分でインクリメント。
 		this.data.count += x < application.width / 2 ? -1 : 1;
 		this.data.countText!.string = `Count: ${this.data.count}`;
 	}
@@ -36,9 +35,9 @@ const CounterApplication = Application.template(($: Model) => ({
 	active: true, // 画面全体でタッチを受け取る
 	contents: [
 		new Text(null, { top: 70, left: 0, right: 0, style, string: "Hello M5Stack" }),
-		new CountText($), // 同じ data を流し込む → $.countText がバインドされる
+		new CountText($, {}), // 同じ data を流し込む → $.countText がバインドされる
 	],
 	Behavior: CounterBehavior,
 }));
 
-export default new CounterApplication({ count: 0 } as Model);
+export default new CounterApplication({ count: 0 } as Model, {});
