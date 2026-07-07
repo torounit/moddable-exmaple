@@ -16,9 +16,10 @@ class CounterBehavior extends Behavior {
 	onCreate(_application: Application, data: Model) {
 		this.data = data;
 	}
-	onTouchBegan(_application: Application) {
-		this.data.count += 1;
-		this.data.countText!.string = `Taps: ${this.data.count}`;
+	onTouchBegan(application: Application, _id: number, x: number, _y: number, _ticks: number) {
+		// 画面左半分でデクリメント、右半分でインクリメント。
+		this.data.count += x < application.width / 2 ? -1 : 1;
+		this.data.countText!.string = `Count: ${this.data.count}`;
 	}
 }
 
@@ -27,7 +28,7 @@ const CountText = Text.template(($: Model) => ({
 	anchor: "countText",
 	top: 130, left: 0, right: 0,
 	style,
-	string: `Taps: ${$.count}`,
+	string: `Count: ${$.count}`,
 }));
 
 const CounterApplication = Application.template(($: Model) => ({
