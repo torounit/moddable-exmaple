@@ -1,0 +1,23 @@
+{
+	"include": [
+		"$(MODDABLE)/examples/manifest_base.json",
+		"$(MODDABLE)/examples/manifest_piu.json",
+		"$(MODDABLE)/examples/manifest_typings.json"
+	],
+	"modules": {
+		"*": "./main"
+	},
+	"typescript": {
+		"tsconfig": {
+			"compilerOptions": {
+				"lib": ["es2025", "esnext.disposable"]
+			}
+		}
+	},
+	"resources": {
+		"*-alpha": [
+			"$(MODDABLE)/examples/assets/fonts/OpenSans-Semibold-16",
+			"$(MODDABLE)/examples/assets/fonts/OpenSans-Semibold-28"
+		]
+	}
+}

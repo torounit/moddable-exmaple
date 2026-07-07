@@ -1,0 +1,15 @@
+{
+	"name": "moddable-example",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Moddable SDK + TypeScript technical-validation app for M5Stack CoreS3",
+	"scripts": {
+		"sim": "mcconfig -d -m -p sim/m5stack",
+		"deploy": "mcconfig -d -m -p esp32/m5stack_cores3",
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@moddable/typings": "*",
+		"typescript": "^6"
+	}
+}
