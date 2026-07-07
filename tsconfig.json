@@ -1,24 +1,15 @@
 {
 	"compilerOptions": {
+		"target": "es2022",
 		"module": "es2022",
-		"target": "ES2022",
-		"lib": ["es2022", "esnext.disposable"],
 		"moduleResolution": "bundler",
+		"lib": ["es2022", "esnext.disposable"],
 		"strict": true,
 		"noEmit": true,
-		"sourceMap": true,
 		"paths": {
-			"embedded:io/*": ["./node_modules/@moddable/typings/embedded_io/*"],
-			"embedded:provider/*": ["./node_modules/@moddable/typings/embedded_provider/*"],
-			"piu/*": ["./node_modules/@moddable/typings/piu/*"],
 			"*": ["./node_modules/@moddable/typings/*"]
 		},
-		"types": [
-			"./node_modules/@moddable/typings/xs",
-			"./node_modules/@moddable/typings/global.d.ts",
-			"./node_modules/@moddable/typings/piu/MC",
-			"./node_modules/@moddable/typings/piu/MC-types"
-		]
+		"types": ["./node_modules/@moddable/typings/xs"]
 	},
 	"include": ["*.ts"]
 }

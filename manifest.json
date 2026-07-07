@@ -16,7 +16,6 @@
 	},
 	"resources": {
 		"*-alpha": [
-			"$(MODDABLE)/examples/assets/fonts/OpenSans-Semibold-16",
 			"$(MODDABLE)/examples/assets/fonts/OpenSans-Semibold-28"
 		]
 	}
